@@ -29,6 +29,7 @@ const state = {
     totalLoaded: 0,
     retryCount: 0,
     useClientFallback: false,
+    viewMode: 'explore',  // 'explore' | 'trending'
 };
 
 // ─── Client-Side Data Generator (Fallback when PHP is unavailable) ───
@@ -239,6 +240,48 @@ const DataGenerator = {
             loaded_count: posts.length,
         };
     },
+
+    // Generate ALL posts, sort by likes (descending), then paginate
+    _trendingCache: null,
+    _trendingCacheCategory: null,
+
+    getTrendingPage(page, limit, category) {
+        // Build or refresh cache when category changes
+        if (!this._trendingCache || this._trendingCacheCategory !== category) {
+            const effectiveTotal = category !== 'all'
+                ? Math.floor(CONFIG.totalPosts / this.categories.length)
+                : CONFIG.totalPosts;
+
+            const allPosts = [];
+            for (let i = 1; i <= effectiveTotal; i++) {
+                allPosts.push(this.generatePost(i, category));
+            }
+            // Sort by likes descending (most popular first)
+            allPosts.sort((a, b) => b.likes - a.likes);
+            this._trendingCache = allPosts;
+            this._trendingCacheCategory = category;
+        }
+
+        const startIndex = (page - 1) * limit;
+        const posts = this._trendingCache.slice(startIndex, startIndex + limit);
+        const hasMore = (startIndex + limit) < this._trendingCache.length;
+
+        return {
+            success: true,
+            page,
+            limit,
+            category,
+            total: this._trendingCache.length,
+            has_more: hasMore,
+            posts,
+            loaded_count: posts.length,
+        };
+    },
+
+    clearTrendingCache() {
+        this._trendingCache = null;
+        this._trendingCacheCategory = null;
+    },
 };
 
 // ─── DOM References ───
@@ -250,6 +293,13 @@ const dom = {
     navbar: document.getElementById('navbar'),
     fabTop: document.getElementById('fab-top'),
     filterBtns: document.querySelectorAll('.filter-btn'),
+    navExplore: document.getElementById('nav-explore'),
+    navTrending: document.getElementById('nav-trending'),
+    navCategories: document.getElementById('nav-categories'),
+    filterBar: document.getElementById('filter-bar'),
+    viewBanner: document.getElementById('view-banner'),
+    viewBannerIcon: document.getElementById('view-banner-icon'),
+    viewBannerText: document.getElementById('view-banner-text'),
 };
 
 // ─── Intersection Observer for Infinite Scroll ───
@@ -287,7 +337,11 @@ async function loadPosts() {
         if (state.useClientFallback) {
             // Client-side generation — simulate network delay
             await delay(300 + Math.random() * 500);
-            data = DataGenerator.getPage(state.currentPage, CONFIG.postsPerPage, state.activeCategory);
+            if (state.viewMode === 'trending') {
+                data = DataGenerator.getTrendingPage(state.currentPage, CONFIG.postsPerPage, state.activeCategory);
+            } else {
+                data = DataGenerator.getPage(state.currentPage, CONFIG.postsPerPage, state.activeCategory);
+            }
         } else {
             // Try PHP API first
             const url = `${CONFIG.apiUrl}?page=${state.currentPage}&limit=${CONFIG.postsPerPage}&category=${state.activeCategory}`;
@@ -304,6 +358,11 @@ async function loadPosts() {
                 data = JSON.parse(text);
             } catch (parseErr) {
                 throw new Error('Invalid JSON response — PHP server may not be running');
+            }
+
+            // If in trending mode with PHP, sort client-side
+            if (state.viewMode === 'trending' && data.success && data.posts.length > 0) {
+                data.posts.sort((a, b) => b.likes - a.likes);
             }
         }
 
@@ -475,9 +534,9 @@ function escapeHtml(text) {
 dom.filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const category = btn.dataset.category;
-        if (category === state.activeCategory) return;
+        if (category === state.activeCategory && state.viewMode === 'explore') return;
 
-        // Update active button
+        // Update active filter button
         dom.filterBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
@@ -488,6 +547,19 @@ dom.filterBtns.forEach(btn => {
         state.hasMore = true;
         state.isLoading = false;
         state.retryCount = 0;
+
+        // If a specific category is chosen, show a banner
+        if (category !== 'all') {
+            const catIcons = { technology: '💻', design: '🎨', science: '🔬', lifestyle: '🌿', travel: '✈️' };
+            showViewBanner(catIcons[category] || '📂', `${category.charAt(0).toUpperCase() + category.slice(1)} Posts`);
+        } else if (state.viewMode === 'trending') {
+            showViewBanner('🔥', 'Trending Posts — Sorted by Most Liked');
+        } else {
+            hideViewBanner();
+        }
+
+        // Clear trending cache on category change
+        DataGenerator.clearTrendingCache();
 
         // Clear grid
         dom.postsGrid.innerHTML = '';
@@ -503,6 +575,106 @@ dom.filterBtns.forEach(btn => {
         loadPosts();
     });
 });
+
+// ─── Navigation View Switching ───
+function switchView(view, event) {
+    if (event) event.preventDefault();
+
+    // Update nav link active state
+    [dom.navExplore, dom.navTrending, dom.navCategories].forEach(link => {
+        if (link) link.classList.remove('active');
+    });
+
+    if (view === 'explore') {
+        if (dom.navExplore) dom.navExplore.classList.add('active');
+
+        state.viewMode = 'explore';
+        state.activeCategory = 'all';
+        state.currentPage = 1;
+        state.totalLoaded = 0;
+        state.hasMore = true;
+        state.isLoading = false;
+        state.retryCount = 0;
+
+        // Reset filter buttons
+        dom.filterBtns.forEach(b => b.classList.remove('active'));
+        document.querySelector('.filter-btn[data-category="all"]')?.classList.add('active');
+
+        DataGenerator.clearTrendingCache();
+        hideViewBanner();
+
+        // Clear and reload
+        dom.postsGrid.innerHTML = '';
+        dom.endMessage.classList.add('hidden');
+        document.querySelectorAll('.end-message:not(#end-message)').forEach(el => el.remove());
+        updateCounter();
+        setupObserver();
+        loadPosts();
+
+        // Scroll to content
+        dom.filterBar?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } else if (view === 'trending') {
+        if (dom.navTrending) dom.navTrending.classList.add('active');
+
+        state.viewMode = 'trending';
+        state.currentPage = 1;
+        state.totalLoaded = 0;
+        state.hasMore = true;
+        state.isLoading = false;
+        state.retryCount = 0;
+
+        DataGenerator.clearTrendingCache();
+        showViewBanner('🔥', 'Trending Posts — Sorted by Most Liked');
+
+        // Clear and reload
+        dom.postsGrid.innerHTML = '';
+        dom.endMessage.classList.add('hidden');
+        document.querySelectorAll('.end-message:not(#end-message)').forEach(el => el.remove());
+        updateCounter();
+        setupObserver();
+        loadPosts();
+
+        // Scroll to content
+        dom.filterBar?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } else if (view === 'categories') {
+        if (dom.navCategories) dom.navCategories.classList.add('active');
+
+        // Scroll to filter bar and highlight it
+        dom.filterBar?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Visual highlight pulse
+        if (dom.filterBar) {
+            dom.filterBar.classList.add('highlight');
+            setTimeout(() => dom.filterBar.classList.remove('highlight'), 1500);
+        }
+
+        // After a moment, set nav back to current active view
+        setTimeout(() => {
+            [dom.navExplore, dom.navTrending, dom.navCategories].forEach(l => l?.classList.remove('active'));
+            if (state.viewMode === 'trending') {
+                dom.navTrending?.classList.add('active');
+            } else {
+                dom.navExplore?.classList.add('active');
+            }
+        }, 1500);
+    }
+}
+
+function showViewBanner(icon, text) {
+    if (dom.viewBanner) {
+        dom.viewBannerIcon.textContent = icon;
+        dom.viewBannerText.textContent = text;
+        dom.viewBanner.classList.remove('hidden');
+    }
+}
+
+function hideViewBanner() {
+    if (dom.viewBanner) {
+        dom.viewBanner.classList.add('hidden');
+    }
+}
 
 // ─── Scroll Effects ───
 let ticking = false;

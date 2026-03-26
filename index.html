@@ -26,9 +26,9 @@
                 <span class="logo-text">InfiniteScroll</span>
             </a>
             <div class="nav-links">
-                <a href="#" class="nav-link active">Explore</a>
-                <a href="#" class="nav-link">Trending</a>
-                <a href="#" class="nav-link">Categories</a>
+                <a href="#" id="nav-explore" class="nav-link active" onclick="switchView('explore', event)">Explore</a>
+                <a href="#" id="nav-trending" class="nav-link" onclick="switchView('trending', event)">Trending</a>
+                <a href="#" id="nav-categories" class="nav-link" onclick="switchView('categories', event)">Categories</a>
             </div>
             <div class="nav-actions">
                 <div id="post-counter" class="post-counter">
@@ -61,7 +61,7 @@
     </header>
 
     <!-- Filter Bar -->
-    <section class="filter-bar">
+    <section id="filter-bar" class="filter-bar">
         <div class="container">
             <div class="filter-group">
                 <button class="filter-btn active" data-category="all">All</button>
@@ -77,6 +77,14 @@
     <!-- Main Content Grid -->
     <main class="main-content">
         <div class="container">
+            <!-- Active View Banner -->
+            <div id="view-banner" class="view-banner hidden">
+                <div class="view-banner-content">
+                    <span id="view-banner-icon" class="view-banner-icon">🔥</span>
+                    <span id="view-banner-text" class="view-banner-text">Trending Posts</span>
+                </div>
+                <button class="view-banner-close" onclick="switchView('explore', event)">✕ Clear</button>
+            </div>
             <div id="posts-grid" class="posts-grid">
                 <!-- Posts will be dynamically loaded here -->
             </div>
@@ -153,7 +161,7 @@
                     <span class="logo-icon">∞</span>
                     <span>InfiniteScroll</span>
                 </div>
-                <p class="footer-text">Built with HTML, CSS, JavaScript & PHP</p>
+                <p class="footer-text">Built by Antariksh Dwivedi</p>
                 <div class="footer-tech">
                     <span class="tech-badge">HTML5</span>
                     <span class="tech-badge">CSS3</span>
