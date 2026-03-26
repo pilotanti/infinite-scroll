@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Infinite Scroll - A seamless browsing experience with auto-loading content as you scroll. Built with HTML, CSS, JavaScript and PHP.">
+    <title>Infinite Scroll | Seamless Content Discovery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Animated Gradient Blobs -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar" class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <span class="logo-icon">∞</span>
+                <span class="logo-text">InfiniteScroll</span>
+            </a>
+            <div class="nav-links">
+                <a href="#" class="nav-link active">Explore</a>
+                <a href="#" class="nav-link">Trending</a>
+                <a href="#" class="nav-link">Categories</a>
+            </div>
+            <div class="nav-actions">
+                <div id="post-counter" class="post-counter">
+                    <span class="counter-icon">📄</span>
+                    <span id="counter-value" class="counter-value">0</span>
+                    <span class="counter-label">posts loaded</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="hero" class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">✦ Powered by Infinite Scroll</div>
+            <h1 class="hero-title">
+                Discover <span class="gradient-text">Endless</span> Content
+            </h1>
+            <p class="hero-subtitle">
+                Scroll down to explore an infinite stream of beautifully curated content.
+                New posts load seamlessly — no clicks, no waiting.
+            </p>
+            <div class="scroll-indicator">
+                <div class="mouse">
+                    <div class="mouse-wheel"></div>
+                </div>
+                <span>Scroll to explore</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter Bar -->
+    <section class="filter-bar">
+        <div class="container">
+            <div class="filter-group">
+                <button class="filter-btn active" data-category="all">All</button>
+                <button class="filter-btn" data-category="technology">Technology</button>
+                <button class="filter-btn" data-category="design">Design</button>
+                <button class="filter-btn" data-category="science">Science</button>
+                <button class="filter-btn" data-category="lifestyle">Lifestyle</button>
+                <button class="filter-btn" data-category="travel">Travel</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <main class="main-content">
+        <div class="container">
+            <div id="posts-grid" class="posts-grid">
+                <!-- Posts will be dynamically loaded here -->
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div id="loading-indicator" class="loading-indicator">
+                <div class="skeleton-grid">
+                    <div class="skeleton-card">
+                        <div class="skeleton-img shimmer"></div>
+                        <div class="skeleton-body">
+                            <div class="skeleton-tag shimmer"></div>
+                            <div class="skeleton-title shimmer"></div>
+                            <div class="skeleton-text shimmer"></div>
+                            <div class="skeleton-text short shimmer"></div>
+                            <div class="skeleton-footer">
+                                <div class="skeleton-avatar shimmer"></div>
+                                <div class="skeleton-name shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-img shimmer"></div>
+                        <div class="skeleton-body">
+                            <div class="skeleton-tag shimmer"></div>
+                            <div class="skeleton-title shimmer"></div>
+                            <div class="skeleton-text shimmer"></div>
+                            <div class="skeleton-text short shimmer"></div>
+                            <div class="skeleton-footer">
+                                <div class="skeleton-avatar shimmer"></div>
+                                <div class="skeleton-name shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-img shimmer"></div>
+                        <div class="skeleton-body">
+                            <div class="skeleton-tag shimmer"></div>
+                            <div class="skeleton-title shimmer"></div>
+                            <div class="skeleton-text shimmer"></div>
+                            <div class="skeleton-text short shimmer"></div>
+                            <div class="skeleton-footer">
+                                <div class="skeleton-avatar shimmer"></div>
+                                <div class="skeleton-name shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- End Message -->
+            <div id="end-message" class="end-message hidden">
+                <div class="end-icon">🎉</div>
+                <h3>You've reached the end!</h3>
+                <p>You've explored all available content. Check back later for more.</p>
+                <button id="back-to-top" class="btn-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+                    ↑ Back to Top
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Back to Top FAB -->
+    <button id="fab-top" class="fab-top hidden" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 15l-6-6-6 6"/>
+        </svg>
+    </button>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-icon">∞</span>
+                    <span>InfiniteScroll</span>
+                </div>
+                <p class="footer-text">Built with HTML, CSS, JavaScript & PHP</p>
+                <div class="footer-tech">
+                    <span class="tech-badge">HTML5</span>
+                    <span class="tech-badge">CSS3</span>
+                    <span class="tech-badge">JavaScript</span>
+                    <span class="tech-badge">PHP</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
